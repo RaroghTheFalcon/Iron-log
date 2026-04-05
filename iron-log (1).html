@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>IRON LOG</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:#0f0f1a;color:#e2e8f0;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+input,button,select{font-family:'Nunito',sans-serif}
+button{cursor:pointer}input:focus{outline:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.fade-in{animation:fadeIn .3s ease}
+.sync-bar{height:3px;background:linear-gradient(90deg,#818cf8,#34d399,#818cf8);background-size:200%;animation:shimmer 1.5s infinite}
+.app{max-width:480px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;background:#0f0f1a;z-index:100}
+.content{padding:0 16px 100px}
+.section-label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:16px 0 10px}
+.input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#e2e8f0;width:100%;font-size:15px}
+.input-mono{text-align:center;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.btn-primary{background:#818cf8;border:none;color:#fff;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:700;width:100%}
+.btn-primary:disabled{opacity:.5}
+.btn-green{background:#16a34a}
+.btn-nav{border:none;border-radius:10px;width:38px;height:38px;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06)}
+.btn-nav.active{background:#818cf8}
+.btn-step{background:rgba(255,255,255,.08);border:none;color:#e2e8f0;border-radius:10px;width:40px;height:44px;font-size:20px;font-weight:700;flex-shrink:0}
+.btn-pill{border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;background:rgba(255,255,255,.06);color:#94a3b8}
+.btn-pill.active{background:#818cf8;color:#fff}
+.btn-back{background:rgba(255,255,255,.06);border:none;color:#e2e8f0;border-radius:10px;width:36px;height:36px;font-size:18px}
+.btn-user{border:none;border-radius:10px;height:38px;font-size:12px;font-weight:700;color:#fff;padding:0 10px;background:rgba(255,255,255,.06)}
+.group-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 8px;text-align:center;color:#e2e8f0;width:100%}
+.ex-item{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;width:100%;text-align:left;color:#e2e8f0;font-size:14px}
+.ex-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.set-badge{background:rgba(129,140,248,.12);color:#c7d2fe;border-radius:8px;padding:5px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;cursor:pointer;display:inline-block}
+.set-badge.warmup{background:rgba(251,191,36,.12);color:#fcd34d}
+.rm-box{background:rgba(129,140,248,.08);border-radius:10px;padding:8px 12px;font-size:13px;color:#818cf8;display:flex;justify-content:space-between;margin-bottom:12px}
+.error-msg{padding:8px 16px;font-size:11px;color:#f87171;background:rgba(248,113,113,.1);text-align:center}
+.empty{text-align:center;color:#64748b;padding:40px}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px}
+.modal{background:#1a1a2e;border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:80vh;overflow:auto;border:1px solid rgba(255,255,255,.1)}
+.modal-close{background:rgba(255,255,255,.08);border:none;color:#94a3b8;border-radius:8px;width:32px;height:32px;font-size:16px}
+.rest-timer{position:fixed;bottom:0;left:0;right:0;color:#fff;padding:16px 20px;z-index:1000;border-top:2px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:16px}
+.rest-timer .time{font-size:28px;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:70px;text-align:center}
+.timer-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:36px;height:36px;font-size:16px}
+.center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px;max-width:400px;margin:0 auto}
+.toggle-row{display:flex;gap:6px;margin-bottom:12px}
+.toggle-btn{flex:1;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.04);color:#94a3b8;font-size:13px;font-weight:600;text-align:center}
+.toggle-btn.active{background:rgba(129,140,248,.15);border-color:#818cf8;color:#e2e8f0}
+.rir-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:#64748b}
+.rir-btn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#94a3b8;font-size:14px;font-weight:700;text-align:center}
+.rir-btn.active{background:rgba(129,140,248,.15);border-color:#818cf8;color:#e2e8f0}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script>
+// ═══ CONFIG ═══
+const GROUPS=[{id:"chest",label:"Грудь",icon:"🏋️"},{id:"back",label:"Спина",icon:"🔙"},{id:"legs",label:"Ноги",icon:"🦵"},{id:"shoulders",label:"Плечи",icon:"💪"},{id:"arms",label:"Руки",icon:"👊"},{id:"cardio",label:"Кардио",icon:"❤️"}];
+const EXERCISES={
+chest:["Жим лежа (штанга)","Жим лежа (гантели)","Жим на наклонной скамье","Разводка гантелей","Кроссовер","Отжимания","Отжимания на брусьях","Пулловер","Бабочка"],
+back:["Подтягивания","Тяга верхнего блока","Тяга штанги в наклоне","Тяга гантели в наклоне","Тяга нижнего блока","Гиперэкстензия","Становая тяга","Тяга Т-грифа","Шраги"],
+legs:["Приседания (штанга)","Жим ногами","Разгибания ног","Сгибания ног","Выпады","Румынская тяга","Приседания в Смите","Икры стоя","Икры сидя"],
+shoulders:["Жим сидя (штанга)","Жим сидя (гантели)","Махи в стороны","Махи перед собой","Тяга к подбородку","Обратные разведения","Жим Арнольда","Махи в наклоне","Фейс-пулл"],
+arms:["Подъем на бицепс (штанга)","Подъем на бицепс (гантели)","Молотки","Французский жим","Разгибания на блоке","Отжимания узким хватом","Кик-бэк"],
+cardio:["Бег (беговая дорожка)","Велотренажер","Эллипс","Гребной тренажер","Скакалка","Бег на улице","Плавание","Степпер","Ходьба"]
+};
+
+// ═══ HELPERS ═══
+const $=s=>document.querySelector(s);
+const today=()=>new Date().toISOString().split("T")[0];
+const c1RM=(w,r)=>r===1?w:(r<=0||w<=0)?0:Math.round(w*(1+r/30));
+const fmtSet=s=>{
+  const prefix=s.setType==="warmup"?"🔸 ":"";
+  if(s.duration) return prefix+s.duration+"мин ск."+s.speed;
+  let t=prefix+s.weight+"×"+s.reps;
+  if(s.rir!==undefined&&s.rir!==null) t+=" @"+s.rir;
+  return t;
+};
+const fmtDate=d=>{const dt=new Date(d+"T00:00:00"),ms=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"],ws=["вс","пн","вт","ср","чт","пт","сб"];return ws[dt.getDay()]+", "+dt.getDate()+" "+ms[dt.getMonth()]};
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+// ═══ API (JSONP) ═══
+let cbN=0;
+function api(params){
+  const url=S.scriptUrl;
+  if(!url)return Promise.reject(new Error("No URL"));
+  return new Promise((res,rej)=>{
+    const cb="__il_"+(++cbN)+"_"+Date.now();
+    const to=setTimeout(()=>{cl();rej(new Error("Таймаут"))},30000);
+    const cl=()=>{clearTimeout(to);delete window[cb];const s=document.getElementById(cb);if(s)s.remove()};
+    window[cb]=d=>{cl();d&&d.ok?res(d):rej(new Error(d?.error||"API error"))};
+    const u=new URL(url);u.searchParams.set("callback",cb);
+    Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,typeof v==="object"?JSON.stringify(v):v));
+    const sc=document.createElement("script");sc.id=cb;sc.src=u.toString();
+    sc.onerror=()=>{cl();rej(new Error("Ошибка сети"))};
+    document.body.appendChild(sc);
+  });
+}
+
+// ═══ STATE ═══
+const S={
+  scriptUrl:localStorage.getItem("il-url")||"",
+  currentUser:localStorage.getItem("il-user")||"",
+  users:[],sessions:[],sessionEx:[],
+  view:"workout",screen:"loading",
+  selGroup:null,selExercise:null,
+  sets:[],
+  newWeight:0,newReps:10,newDuration:30,newSpeed:5,
+  setType:"work",rir:null,note:"",
+  restDur:90,restTimer:null,
+  syncing:false,error:"",
+  chartEx:null,chartMetric:"weight",
+  showWeightPopup:false,bodyWeight:"",
+  _newUser:""
+};
+
+// ═══ DATA HELPERS ═══
+function getLastStats(name){
+  for(const s of S.sessions){
+    if(s.date===today())continue;
+    const ex=s.exercises?.find(e=>e.name===name);
+    if(ex&&ex.sets.length>0)return{sets:ex.sets,date:s.date};
+  }
+  return null;
+}
+function getFirstWorkSet(name){
+  const last=getLastStats(name);
+  if(!last)return null;
+  const work=last.sets.find(s=>s.setType==="work"||!s.setType);
+  return work||last.sets[0];
+}
+function getFreq(gid){
+  const f={};S.sessions.slice(0,10).forEach(s=>{s.exercises?.forEach(ex=>{if((EXERCISES[gid]||[]).includes(ex.name))f[ex.name]=(f[ex.name]||0)+1})});return f;
+}
+function getSorted(gid){const f=getFreq(gid);return[...(EXERCISES[gid]||[])].sort((a,b)=>(f[b]||0)-(f[a]||0));}
+function allNames(){const n=new Set();S.sessions.forEach(s=>s.exercises?.forEach(ex=>n.add(ex.name)));return[...n].sort();}
+
+// ═══ RENDER ═══
+function render(){
+  const app=$("#app");
+  switch(S.screen){
+    case "setup":app.innerHTML=rSetup();break;
+    case "userPicker":app.innerHTML=rUserPicker();break;
+    case "main":app.innerHTML=rMain();break;
+    case "weightPopup":app.innerHTML=rMain()+rWeightPopup();break;
+    default:app.innerHTML='<div class="center-screen"><div style="font-size:32px;margin-bottom:12px">🏋️</div>Загрузка...</div>';
+  }
+  bind();
+}
+
+function rSetup(){
+  return `<div class="center-screen">
+    <div style="font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px">IRON LOG</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:32px">Подключение к Google Sheets</div>
+    <input class="input" id="urlIn" placeholder="Вставь URL Apps Script" value="${esc(S.scriptUrl)}" style="margin-bottom:12px;font-size:13px">
+    <button class="btn-primary" id="btnConnect" ${S.syncing?"disabled":""}>${S.syncing?"Подключение...":"Подключить"}</button>
+    ${S.error?`<div style="margin-top:12px;font-size:12px;color:#f87171;text-align:center">${esc(S.error)}</div>`:""}
+    <div style="margin-top:32px;font-size:11px;color:#475569;text-align:center;line-height:1.6">Google Sheet → Расширения → Apps Script → вставь код → задеплой → вставь URL</div>
+  </div>`;
+}
+
+function rUserPicker(){
+  return `<div class="center-screen">
+    <div style="font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px">IRON LOG</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:32px">Кто тренируется?</div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:20px">
+      ${S.users.map(u=>`<button class="ex-item" data-a="selUser" data-u="${esc(u)}" style="justify-content:center"><span style="font-weight:700;font-size:16px">${esc(u)}</span></button>`).join("")}
+    </div>
+    <div style="display:flex;gap:8px;width:100%">
+      <input class="input" id="newUserIn" placeholder="Новый пользователь" style="font-size:13px">
+      <button class="btn-primary" style="width:auto;padding:14px 20px" id="btnNewUser" ${S.syncing?"disabled":""}>+</button>
+    </div>
+    ${S.error?`<div style="margin-top:12px;font-size:12px;color:#f87171">${esc(S.error)}</div>`:""}
+  </div>`;
+}
+
+function rWeightPopup(){
+  const lastW=S._lastBodyWeight;
+  return `<div class="modal-overlay"><div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Доброе утро! 🏋️</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px">${lastW?`Прошлый вес: ${lastW} кг`:"Введи вес тела"}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <button class="btn-step" data-a="adjBW" data-d="-0.5">−</button>
+      <input type="number" class="input input-mono" id="bwIn" value="${S.bodyWeight||lastW||""}" step="0.1" placeholder="кг">
+      <button class="btn-step" data-a="adjBW" data-d="0.5">+</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" data-a="saveBW" style="flex:1">Сохранить</button>
+      <button class="btn-primary" data-a="skipBW" style="flex:1;background:rgba(255,255,255,.08)">Пропустить</button>
+    </div>
+  </div></div>`;
+}
+
+// ═══ MAIN RENDER ═══
+function rMain(){
+  let body="";
+  if(S.view==="workout")body=rWorkout();
+  else if(S.view==="history")body=rHistory();
+  else if(S.view==="progress")body=rProgress();
+  return `
+    <div class="header">
+      <div><div style="font-size:20px;font-weight:800;letter-spacing:-.5px">IRON LOG</div><div style="font-size:13px;color:#818cf8;font-weight:600">${fmtDate(today())}</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn-user" data-a="showUsers">${esc(S.currentUser)}</button>
+        ${["workout","history","progress"].map((v,i)=>`<button class="btn-nav ${S.view===v?"active":""}" data-a="setView" data-v="${v}">${["🏋️","📋","📊"][i]}</button>`).join("")}
+        <button class="btn-nav" data-a="exportCSV">📥</button>
+      </div>
+    </div>
+    ${S.syncing?'<div class="sync-bar"></div>':""}
+    ${S.error?`<div class="error-msg">${esc(S.error)}</div>`:""}
+    <div class="content fade-in">${body}</div>
+    ${S.restTimer?rTimer():""}${S.chartEx?rChart():""}`;
+}
+
+// ═══ WORKOUT ═══
+function rWorkout(){
+  let h="";
+  // Today
+  if(S.sessionEx.length>0&&!S.selExercise){
+    h+=`<div class="section-label">Сегодня</div>`;
+    S.sessionEx.forEach((ex,ei)=>{
+      const isC=ex.group==="cardio";
+      const rmT=!isC&&ex.sets.some(s=>s.weight>0&&s.setType!=="warmup")?`<span style="font-size:11px;color:#64748b">1RM: ${Math.max(...ex.sets.filter(s=>s.weight>0&&s.setType!=="warmup").map(s=>c1RM(s.weight,s.reps)))} кг</span>`:"";
+      h+=`<div class="ex-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">${esc(ex.name)}</span>${rmT}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${ex.sets.map((s,si)=>`<div class="set-badge ${s.setType==="warmup"?"warmup":""}" data-a="rmSet" data-ei="${ei}" data-si="${si}" title="Удалить">${fmtSet(s)}${s.note?'<span style="font-size:9px;opacity:.6"> 💬</span>':""}</div>`).join("")}</div></div>`;
+    });
+    h+='<div style="margin-bottom:20px"></div>';
+  }
+  // Groups
+  if(!S.selGroup&&!S.selExercise){
+    h+=`<div class="section-label">Группа мышц</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">${GROUPS.map(g=>`<button class="group-card" data-a="selGroup" data-g="${g.id}"><div style="font-size:28px;margin-bottom:4px">${g.icon}</div><div style="font-size:13px;font-weight:700">${g.label}</div></button>`).join("")}</div>`;
+  }
+  // Exercises
+  if(S.selGroup&&!S.selExercise){
+    const gr=GROUPS.find(g=>g.id===S.selGroup),freq=getFreq(S.selGroup);
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><button class="btn-back" data-a="clrGroup">←</button><div class="section-label" style="margin:0">${gr?.label||""}</div></div>
+    <div style="display:flex;flex-direction:column;gap:6px">${getSorted(S.selGroup).map(name=>{
+      const last=getLastStats(name),ws=last?getFirstWorkSet(name):null;
+      const lt=ws?`<span style="font-size:11px;color:#64748b;margin-left:8px">${fmtSet(ws)}</span>`:"";
+      const ft=freq[name]>0?`<span style="font-size:10px;color:#818cf8;opacity:.7">×${freq[name]}</span>`:"";
+      return `<button class="ex-item" data-a="selEx" data-n="${esc(name)}"><div><span style="font-weight:600;font-size:14px">${esc(name)}</span>${lt}</div>${ft}</button>`;
+    }).join("")}</div>`;
+  }
+  // Set input
+  if(S.selExercise){
+    const isC=S.selGroup==="cardio",last=getLastStats(S.selExercise);
+    const lastT=last?`<div style="font-size:11px;color:#64748b">Прошлый раз (${fmtDate(last.date)}): ${last.sets.map(s=>fmtSet(s)).join(", ")}</div>`:"";
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><button class="btn-back" data-a="clrEx">←</button><div><div style="font-weight:700;font-size:16px">${esc(S.selExercise)}</div>${lastT}</div></div>`;
+
+    if(!isC){
+      // Set type toggle
+      h+=`<div class="toggle-row">
+        <button class="toggle-btn ${S.setType==="warmup"?"active":""}" data-a="setType" data-t="warmup">🔸 Разминка</button>
+        <button class="toggle-btn ${S.setType==="work"?"active":""}" data-a="setType" data-t="work">💪 Рабочий</button>
+      </div>`;
+    }
+
+    if(isC){
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div><div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600">МИНУТЫ</div><div style="display:flex;align-items:center;gap:4px"><button class="btn-step" data-a="adj" data-f="newDuration" data-d="-5">−</button><input type="number" class="input input-mono" id="inpDur" value="${S.newDuration}"><button class="btn-step" data-a="adj" data-f="newDuration" data-d="5">+</button></div></div>
+        <div><div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600">СКОРОСТЬ</div><div style="display:flex;align-items:center;gap:4px"><button class="btn-step" data-a="adj" data-f="newSpeed" data-d="-0.5">−</button><input type="number" class="input input-mono" id="inpSpd" value="${S.newSpeed}"><button class="btn-step" data-a="adj" data-f="newSpeed" data-d="0.5">+</button></div></div>
+      </div>`;
+    } else {
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div><div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600">ВЕС (КГ)</div><div style="display:flex;align-items:center;gap:4px"><button class="btn-step" data-a="adj" data-f="newWeight" data-d="-2.5">−</button><input type="number" class="input input-mono" id="inpW" value="${S.newWeight}"><button class="btn-step" data-a="adj" data-f="newWeight" data-d="2.5">+</button></div></div>
+        <div><div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600">ПОВТОРЫ</div><div style="display:flex;align-items:center;gap:4px"><button class="btn-step" data-a="adj" data-f="newReps" data-d="-1">−</button><input type="number" class="input input-mono" id="inpR" value="${S.newReps}"><button class="btn-step" data-a="adj" data-f="newReps" data-d="1">+</button></div></div>
+      </div>`;
+      if(S.setType==="work"&&S.newWeight>0&&S.newReps>0) h+=`<div class="rm-box"><span>1RM</span><span style="font-weight:700;font-family:'JetBrains Mono',monospace">${c1RM(S.newWeight,S.newReps)} кг</span></div>`;
+      // RIR
+      h+=`<div class="rir-row"><span>RIR:</span>${[null,4,3,2,1,0].map(v=>`<button class="rir-btn ${S.rir===v?"active":""}" data-a="setRIR" data-v="${v===null?"null":v}">${v===null?"—":v}</button>`).join("")}</div>`;
+    }
+
+    h+=`<input class="input" id="inpNote" placeholder="Заметка" value="${esc(S.note)}" style="margin-bottom:12px;font-size:13px">`;
+
+    if(!isC) h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:12px;color:#64748b"><span>Отдых:</span>${[60,90,120,180].map(s=>`<button class="btn-pill ${S.restDur===s?"active":""}" data-a="setRest" data-v="${s}">${s}с</button>`).join("")}</div>`;
+
+    h+=`<button class="btn-primary" data-a="addSet" style="margin-bottom:12px">${isC?"Записать":"Записать подход"}</button>`;
+
+    if(S.sets.length>0){
+      h+=`<div style="margin-bottom:16px"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${S.sets.map((s,i)=>`<div class="set-badge ${s.setType==="warmup"?"warmup":""}"><span style="font-weight:700">${i+1}.</span> ${fmtSet(s)}</div>`).join("")}</div>
+        <button class="btn-primary btn-green" data-a="finishEx" ${S.syncing?"disabled":""}>${S.syncing?"Сохранение...":`✓ Завершить (${S.sets.length} подх.)`}</button></div>`;
+    }
+  }
+  return h;
+}
+
+// ═══ HISTORY ═══
+function rHistory(){
+  let h=`<div class="section-label">История</div>`;
+  if(!S.sessions.length)return h+'<div class="empty">Пока нет записей</div>';
+  S.sessions.slice(0,30).forEach((s,si)=>{
+    const isT=s.date===today();
+    h+=`<div class="ex-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-weight:700;font-size:14px">${fmtDate(s.date)}${isT?'<span style="color:#818cf8;margin-left:6px;font-size:11px">сегодня</span>':""}</span>
+      ${!isT?`<button class="btn-pill" style="background:rgba(129,140,248,.12);color:#818cf8" data-a="copyWk" data-i="${si}" ${S.syncing?"disabled":""}>📋 Повторить</button>`:""}
+    </div>${(s.exercises||[]).map(ex=>`<div style="margin-bottom:4px;font-size:13px"><span style="color:#94a3b8">${esc(ex.name)}: </span><span style="color:#cbd5e1">${ex.sets.map(s=>fmtSet(s)).join(", ")}</span></div>`).join("")}</div>`;
+  });
+  return h;
+}
+
+// ═══ PROGRESS ═══
+function rProgress(){
+  const ns=allNames();
+  let h=`<div class="section-label">Прогресс</div>`;
+  if(!ns.length)return h+'<div class="empty">Запиши тренировку</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px">';
+  ns.forEach(n=>{let c=0;S.sessions.forEach(s=>s.exercises?.forEach(ex=>{if(ex.name===n)c++}));
+    h+=`<button class="ex-item" data-a="showChart" data-n="${esc(n)}"><span style="font-weight:600;font-size:14px">${esc(n)}</span><span style="font-size:11px;color:#64748b">${c} тр.</span></button>`;
+  });
+  return h+'</div>';
+}
+
+// ═══ CHART ═══
+function rChart(){
+  const ex=S.chartEx,m=S.chartMetric,pts=[];
+  S.sessions.forEach(s=>{s.exercises?.forEach(e=>{if(e.name!==ex)return;const v=e.sets.filter(s=>s.weight>0&&s.setType!=="warmup");if(!v.length)return;
+    pts.push({date:s.date,weight:Math.max(...v.map(s=>s.weight)),rm:Math.max(...v.map(s=>c1RM(s.weight,s.reps))),volume:v.reduce((a,s)=>a+s.weight*s.reps,0)});
+  })});
+  pts.sort((a,b)=>a.date.localeCompare(b.date));
+  if(pts.length<2)return `<div class="modal-overlay" data-a="clrChart"><div class="modal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="margin:0;font-size:16px">${esc(ex)}</h3><button class="modal-close" data-a="clrChart">✕</button></div><p style="color:#94a3b8;text-align:center;padding:32px">Нужно минимум 2 тренировки (рабочие подходы)</p></div></div>`;
+  const vals=pts.map(p=>p[m]),mx=Math.max(...vals),mn=Math.min(...vals),rng=mx-mn||1;
+  const cH=180,cW=Math.max(300,pts.length*60),pY=20;
+  const gY=v=>pY+(cH-2*pY)*(1-(v-mn)/rng);
+  const pathD=pts.map((p,i)=>{const x=(i/(pts.length-1))*(cW-40)+20;return`${i===0?"M":"L"} ${x} ${gY(p[m])}`}).join(" ");
+  const tr=vals[vals.length-1]-vals[0];
+  const lb={weight:"Макс. вес",rm:"1RM",volume:"Объём"};
+  return `<div class="modal-overlay"><div class="modal" style="max-width:520px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="margin:0;font-size:16px">${esc(ex)}</h3><button class="modal-close" data-a="clrChart">✕</button></div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">${Object.entries(lb).map(([k,l])=>`<button class="btn-pill ${m===k?"active":""}" data-a="setMetric" data-v="${k}">${l}</button>`).join("")}</div>
+    <div style="overflow-x:auto;margin-bottom:12px"><svg width="${cW}" height="${cH}" viewBox="0 0 ${cW} ${cH}">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="${tr>=0?"#34d399":"#f87171"}"/></linearGradient></defs>
+      ${[0,.25,.5,.75,1].map(f=>{const y=pY+(cH-2*pY)*(1-f);return`<line x1="20" y1="${y}" x2="${cW-20}" y2="${y}" stroke="rgba(255,255,255,.06)"/><text x="16" y="${y+4}" fill="#64748b" font-size="10" text-anchor="end">${Math.round(mn+rng*f)}</text>`}).join("")}
+      <path d="${pathD}" fill="none" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${pts.map((p,i)=>{const x=(i/(pts.length-1))*(cW-40)+20;return`<circle cx="${x}" cy="${gY(p[m])}" r="4" fill="#1a1a2e" stroke="#818cf8" stroke-width="2"/><text x="${x}" y="${cH-2}" fill="#64748b" font-size="9" text-anchor="middle">${p.date.slice(5)}</text>`}).join("")}
+    </svg></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:8px;font-size:13px"><span style="color:#94a3b8">Тренировок: ${pts.length}</span><span style="color:${tr>=0?"#34d399":"#f87171"};font-weight:600">${tr>=0?"↑":"↓"} ${Math.abs(Math.round(tr))} кг</span></div>
+  </div></div>`;
+}
+
+// ═══ TIMER ═══
+function rTimer(){
+  const t=S.restTimer;if(!t)return"";
+  const m=Math.floor(t.sec/60),s=t.sec%60,pct=(t.sec/t.init)*100;
+  return `<div class="rest-timer" style="background:${t.sec<=0?"#16a34a":"#1a1a2e"}">
+    <div style="flex:1"><div style="font-size:12px;opacity:.7;margin-bottom:4px">${t.sec<=0?"Время вышло!":"Отдых"}</div>
+    <div style="height:4px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:2px;background:${t.sec<=10?"#ef4444":"#818cf8"};transition:width 1s linear"></div></div></div>
+    <div class="time">${m}:${s.toString().padStart(2,"0")}</div>
+    <div style="display:flex;gap:8px"><button class="timer-btn" data-a="togTimer">${t.run?"⏸":"▶️"}</button><button class="timer-btn" data-a="rstTimer">🔄</button><button class="timer-btn" data-a="clrTimer">✕</button></div>
+  </div>`;
+}
+
+function startTimer(sec){
+  stopTimer();
+  S.restTimer={sec,init:sec,run:true};
+  S.restTimer._iv=setInterval(()=>{
+    if(!S.restTimer)return;
+    if(S.restTimer.run&&S.restTimer.sec>0){S.restTimer.sec--;updateTimerUI();}
+    if(S.restTimer&&S.restTimer.sec<=0){S.restTimer.run=false;try{navigator.vibrate?.(300)}catch{};render();}
+  },1000);
+}
+function stopTimer(){if(S.restTimer?._iv)clearInterval(S.restTimer._iv);S.restTimer=null;}
+function updateTimerUI(){
+  const el=document.querySelector(".rest-timer");if(!el){render();return;}
+  const t=S.restTimer,m=Math.floor(t.sec/60),s=t.sec%60,pct=(t.sec/t.init)*100;
+  el.style.background=t.sec<=0?"#16a34a":"#1a1a2e";
+  el.querySelector(".time").textContent=m+":"+s.toString().padStart(2,"0");
+  const bar=el.querySelector("div>div>div");if(bar){bar.style.width=pct+"%";bar.style.background=t.sec<=10?"#ef4444":"#818cf8";}
+}
+
+// ═══ EVENTS ═══
+function bind(){
+  document.querySelectorAll("[data-a]").forEach(el=>{el.onclick=()=>act(el.dataset)});
+  const b=(id,k)=>{const el=document.getElementById(id);if(el)el.oninput=()=>{S[k]=el.type==="number"?Number(el.value):el.value}};
+  b("inpW","newWeight");b("inpR","newReps");b("inpDur","newDuration");b("inpSpd","newSpeed");b("inpNote","note");
+  const bw=document.getElementById("bwIn");if(bw)bw.oninput=()=>S.bodyWeight=bw.value;
+  const nu=document.getElementById("newUserIn");if(nu){nu.oninput=()=>S._newUser=nu.value;nu.onkeydown=e=>{if(e.key==="Enter")act({a:"createUser"})}}
+}
+
+async function act(d){
+  const a=d.a;
+  switch(a){
+    case "selGroup":S.selGroup=d.g;break;
+    case "clrGroup":S.selGroup=null;break;
+    case "selEx":{
+      S.selExercise=d.n; S.sets=[]; S.note=""; S.setType="work"; S.rir=null;
+      const ws=getFirstWorkSet(d.n);
+      if(S.selGroup==="cardio"){S.newDuration=ws?.duration||30;S.newSpeed=ws?.speed||5;}
+      else{S.newWeight=ws?.weight||0;S.newReps=ws?.reps||10;}
+      break;
+    }
+    case "clrEx":S.selExercise=null;S.sets=[];break;
+    case "adj":{const f=d.f,delta=Number(d.d);const min=f==="newReps"?1:0;S[f]=Math.max(min,S[f]+delta);break;}
+    case "setType":S.setType=d.t;break;
+    case "setRIR":S.rir=d.v==="null"?null:Number(d.v);break;
+    case "setRest":S.restDur=Number(d.v);break;
+    case "setView":S.view=d.v;break;
+    case "showUsers":S.screen="userPicker";break;
+    case "addSet":{
+      const isC=S.selGroup==="cardio";
+      const set=isC
+        ?{duration:S.newDuration,speed:S.newSpeed,setType:"work",note:S.note.trim()||undefined}
+        :{weight:S.newWeight,reps:S.newReps,setType:S.setType,rir:S.rir,note:S.note.trim()||undefined};
+      S.sets.push(set);S.note="";
+      if(!isC)startTimer(S.restDur);
+      break;
+    }
+    case "finishEx":{
+      if(!S.sets.length)return;
+      S.syncing=true;S.error="";render();
+      try{await api({action:"addSets",user:S.currentUser,date:today(),group:S.selGroup,exercise:S.selExercise,sets:S.sets});await loadWk();}catch(e){S.error=e.message;}
+      S.syncing=false;S.selExercise=null;S.sets=[];S.selGroup=null;break;
+    }
+    case "rmSet":{
+      const ei=+d.ei,si=+d.si,set=S.sessionEx[ei]?.sets[si];
+      if(!set?.rowId||!confirm("Удалить подход?"))return;
+      S.syncing=true;S.error="";render();
+      try{await api({action:"deleteSet",user:S.currentUser,rowId:set.rowId});await loadWk();}catch(e){S.error=e.message;}
+      S.syncing=false;break;
+    }
+    case "copyWk":{
+      const s=S.sessions[+d.i];if(!s||s.date===today())return;
+      S.syncing=true;S.error="";render();
+      try{for(const ex of s.exercises){const sets=ex.sets.map(s=>s.duration?{duration:s.duration,speed:s.speed,setType:"work"}:{weight:s.weight,reps:s.reps,setType:s.setType||"work"});await api({action:"addSets",user:S.currentUser,date:today(),group:ex.group,exercise:ex.name,sets})}await loadWk();S.view="workout";}catch(e){S.error=e.message;}
+      S.syncing=false;break;
+    }
+    case "showChart":S.chartEx=d.n;S.chartMetric="weight";break;
+    case "clrChart":S.chartEx=null;break;
+    case "setMetric":S.chartMetric=d.v;break;
+    case "togTimer":if(S.restTimer)S.restTimer.run=!S.restTimer.run;break;
+    case "rstTimer":if(S.restTimer){S.restTimer.sec=S.restTimer.init;S.restTimer.run=true;}break;
+    case "clrTimer":stopTimer();break;
+    case "selUser":{
+      S.currentUser=d.u;localStorage.setItem("il-user",d.u);S.screen="main";S.syncing=true;S.error="";render();
+      await loadWk();S.syncing=false;checkWeightPopup();break;
+    }
+    case "createUser":{
+      const n=(S._newUser||"").trim();if(!n)return;
+      S.syncing=true;S.error="";render();
+      try{await api({action:"addUser",user:n});S.users.push(n);S.currentUser=n;localStorage.setItem("il-user",n);S.screen="main";await loadWk();}catch(e){S.error=e.message;}
+      S.syncing=false;S._newUser="";checkWeightPopup();break;
+    }
+    case "adjBW":{const v=Number(S.bodyWeight||S._lastBodyWeight||80);S.bodyWeight=Math.max(0,v+Number(d.d));break;}
+    case "saveBW":{
+      const w=Number(S.bodyWeight||document.getElementById("bwIn")?.value);
+      if(!w||w<=0){S.screen="main";break;}
+      try{await api({action:"saveWeight",user:S.currentUser,date:today(),weight:w});localStorage.setItem("il-bw-date-"+S.currentUser,today());}catch(e){S.error=e.message;}
+      S.screen="main";break;
+    }
+    case "skipBW":localStorage.setItem("il-bw-date-"+S.currentUser,today());S.screen="main";break;
+    case "exportCSV":exportCSV();return;
+    default:break;
+  }
+  render();
+}
+
+// ═══ WEIGHT POPUP ═══
+async function checkWeightPopup(){
+  const lastDate=localStorage.getItem("il-bw-date-"+S.currentUser);
+  if(lastDate===today()){S.screen="main";render();return;}
+  try{
+    const r=await api({action:"getWeights",user:S.currentUser});
+    S._lastBodyWeight=r.weights?.[0]?.weight||"";
+    S.bodyWeight=S._lastBodyWeight;
+  }catch{}
+  S.screen="weightPopup";render();
+}
+
+// ═══ CSV ═══
+function exportCSV(){
+  let csv="Дата,Группа,Упражнение,Подход,Тип,Вес,Повторы,RIR,1RM,Длительность,Скорость,Заметка\n";
+  S.sessions.forEach(s=>{s.exercises?.forEach(ex=>{ex.sets.forEach((set,i)=>{
+    if(set.duration)csv+=`${s.date},${ex.group},${ex.name},${i+1},${set.setType||"work"},,,,,${set.duration},${set.speed},${(set.note||"").replace(/,/g,";")}\n`;
+    else csv+=`${s.date},${ex.group},${ex.name},${i+1},${set.setType||"work"},${set.weight},${set.reps},${set.rir!==undefined?set.rir:""},${c1RM(set.weight,set.reps)},,,${(set.note||"").replace(/,/g,";")}\n`;
+  })})});
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));
+  a.download=`iron-log-${S.currentUser}-${today()}.csv`;a.click();
+}
+
+// ═══ LOAD ═══
+async function loadWk(){
+  try{const r=await api({action:"getWorkouts",user:S.currentUser});S.sessions=r.sessions||[];S.sessionEx=(r.sessions||[]).find(s=>s.date===today())?.exercises||[];S.error="";}catch(e){S.error=e.message;}
+}
+
+// ═══ INIT ═══
+async function init(){
+  render();
+  if(!S.scriptUrl){S.screen="setup";render();return;}
+  try{
+    const r=await api({action:"getUsers"});S.users=r.users||[];
+    if(S.currentUser&&S.users.includes(S.currentUser)){S.screen="main";await loadWk();checkWeightPopup();}
+    else{S.screen="userPicker";render();}
+  }catch(e){S.error=e.message;S.screen="setup";render();}
+}
+
+document.addEventListener("click",e=>{
+  if(e.target.id==="btnConnect"){
+    const url=(document.getElementById("urlIn")?.value||"").trim();if(!url)return;
+    S.scriptUrl=url;localStorage.setItem("il-url",url);S.syncing=true;S.error="";render();
+    api({action:"getUsers"}).then(r=>{S.users=r.users||[];S.syncing=false;
+      if(S.currentUser&&S.users.includes(S.currentUser)){S.screen="main";return loadWk().then(()=>checkWeightPopup());}
+      else{S.screen="userPicker";}
+    }).catch(e=>{S.error="Не удалось подключиться";S.syncing=false;}).finally(()=>render());
+  }
+});
+
+init();
+</script>
+</body>
+</html>
